@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Anggota</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Dashboard Anggota</h2>
+  <p>Saldo: <span id="balance">Loading...</span></p>
+  <form id="depositForm">
+    <input type="number" id="amount" placeholder="Jumlah Simpan (Rp)" required min="1">
+    <button type="submit">Simpan Uang</button>
+  </form>
+  <form id="loanForm">
+    <input type="number" id="loanAmount" placeholder="Jumlah Pinjam (Rp)" required min="1">
+    <button type="submit">Ajukan Pinjaman</button>
+  </form>
+  <button onclick="logout()">Logout</button>
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    async function loadBalance() {
+      const response = await fetch('/balance', { headers: { 'Authorization': token } });
+      const data = await response.json();
+      document.getElementById('balance').textContent = `Rp ${data.balance}`;
+    }
+    loadBalance();
+
+    document.getElementById('depositForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const amount = parseInt(document.getElementById('amount').value);
+      const response = await fetch('/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+        body: JSON.stringify({ amount })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        document.getElementById('balance').textContent = `Rp ${data.balance}`;
+        alert('Simpan berhasil!');
+      } else {
+        alert(data.message);
+      }
+    });
+
+    document.getElementById('loanForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const amount = parseInt(document.getElementById('loanAmount').value);
+      const response = await fetch('/loan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+        body: JSON.stringify({ amount })
+      });
+      const data = await response.json();
+      alert(data.message);
+    });
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
