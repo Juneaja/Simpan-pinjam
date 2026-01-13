@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Admin</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Dashboard Admin</h2>
+  <button onclick="loadReports()">Lihat Laporan</button>
+  <div id="reports"></div>
+  <button onclick="logout()">Logout</button>
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    async function loadReports() {
+      const response = await fetch('/reports', { headers: { 'Authorization': token } });
+      const data = await response.json();
+      if (response.ok) {
+        let html = '<h3>Anggota:</h3><ul>';
+        data.users.forEach(u => html += `<li>${u.username} - Saldo: Rp ${u.balance}</li>`);
+        html += '</ul><h3>Transaksi:</h3><ul>';
+        data.transactions.forEach(t => {
+          html += `<li>${t.type} - Rp ${t.amount} - Status: ${t.status || 'N/A'} <button onclick="approveLoan(${t.id})" ${t.status !== 'pending' ? 'disabled' : ''}>Approve</button></li>`;
+        });
+        html += '</ul>';
+        document.getElementById('reports').innerHTML = html;
+      }
+    }
+
+    async function approveLoan(id) {
+      const response = await fetch(`/approve-loan/${id}`, {
+        method: 'POST',
+        headers: { 'Authorization': token }
+      });
+      const data = await response.json();
+      alert(data.message);
+      loadReports();
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    }
+  </script>
+</body>
+</html>
